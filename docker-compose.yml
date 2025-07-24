@@ -75,6 +75,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  openai-edge-tts:
+    restart: always
+    image: travisvn/openai-edge-tts:latest
+    ports:
+      - 5050:5050
+    environment:
+      - PORT=5050
 
 volumes:
   data:

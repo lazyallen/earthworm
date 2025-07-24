@@ -1,4 +1,4 @@
-import { usePronunciation } from "~/composables/user/pronunciation";
+import { useTTS } from "~/composables/user/tts";
 
 // 便于测试
 // 后面不使用 audio 后也可以不破坏业务逻辑
@@ -8,7 +8,8 @@ export function updateSource(src: string) {
   audio.load();
 }
 
-const { getPronunciationUrl } = usePronunciation();
+const { playTTS, fallbackTTS } = useTTS();
+
 export function usePlayWordSound() {
   const wordAudio = new Audio();
   let lastWord = "";
@@ -22,14 +23,21 @@ export function usePlayWordSound() {
     isPlaying = false;
   };
 
-  function handlePlayWordSound(word: string) {
+  async function handlePlayWordSound(word: string) {
     if (isPlaying && lastWord === word) {
       // skip
       return;
     }
     lastWord = word;
-    wordAudio.src = getPronunciationUrl(word);
-    wordAudio.play();
+
+    try {
+      // 优先使用TTS引擎
+      await playTTS(word);
+    } catch (error) {
+      console.warn("TTS failed, using browser speech synthesis:", error);
+      // 直接使用浏览器内置语音合成，不再使用有道词典
+      fallbackTTS(word);
+    }
   }
 
   return {

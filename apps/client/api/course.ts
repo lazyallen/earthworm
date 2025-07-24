@@ -47,3 +47,29 @@ function transformerFetchCompleteCourse(apiResponse: CompleteCourseResponse): {
     nextCourse: apiResponse.nextCourse as Course,
   };
 }
+
+export async function deleteCourse(coursePackId: string, courseId: string) {
+  const http = getHttp();
+  return await http(`/course-pack/${coursePackId}/courses/${courseId}`, {
+    method: "delete",
+  });
+}
+
+export async function updateCourse(
+  coursePackId: string,
+  courseId: string,
+  updateData: { title: string; description?: string },
+) {
+  const http = getHttp();
+  return await http(`/course-pack/${coursePackId}/courses/${courseId}`, {
+    method: "put",
+    body: updateData,
+  });
+}
+
+export async function exportCourse(coursePackId: string, courseId: string) {
+  const http = getHttp();
+  return await http(`/course-pack/${coursePackId}/courses/${courseId}/export`, {
+    method: "get",
+  });
+}

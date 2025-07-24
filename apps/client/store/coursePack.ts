@@ -14,8 +14,8 @@ export const useCoursePackStore = defineStore("course-pack", () => {
     coursePacks.value = res;
   }
 
-  async function setupCoursePack(coursePackId: string) {
-    if (coursePackId === currentCoursePack.value?.id) return;
+  async function setupCoursePack(coursePackId: string, forceRefresh = false) {
+    if (!forceRefresh && coursePackId === currentCoursePack.value?.id) return;
 
     const res = await fetchCoursePack(coursePackId);
     currentCoursePack.value = res;

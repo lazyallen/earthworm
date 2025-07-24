@@ -32,3 +32,18 @@ export async function fetchCoursePack(coursePackId: string) {
     method: "get",
   })) as CoursePack;
 }
+
+export async function importCourseFromCsv(
+  coursePackId: string,
+  csvData: Array<{ chinese: string; english: string; soundmark: string }>,
+  courseName?: string,
+) {
+  const http = getHttp();
+  return await http(`/course-pack/${coursePackId}/import`, {
+    method: "post",
+    body: JSON.stringify({ csvData, courseName }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+}

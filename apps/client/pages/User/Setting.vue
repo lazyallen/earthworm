@@ -99,21 +99,55 @@
               />
             </td>
           </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2 class="text-xl font-medium">TTS设置</h2>
+      <table class="table">
+        <tbody>
           <tr class="hover">
-            <td class="label-text">切换口音</td>
+            <td class="label-text">语音选择</td>
             <td class="text-right">
-              <div class="join">
-                <input
-                  v-for="lang in getPronunciationOptions()"
-                  class="btn join-item btn-sm"
-                  type="radio"
-                  name="options"
-                  :value="lang.value"
-                  :aria-label="lang.label"
-                  :checked="pronunciation === lang.value"
-                  @change="togglePronunciation(lang.value as PronunciationType)"
+              <div class="w-full">
+                <EdgeTTSVoiceSelector
+                  v-model="ttsSettings.voice"
+                  @change="onVoiceChange"
                 />
               </div>
+            </td>
+          </tr>
+          <tr class="hover">
+            <td class="label-text">播放速度</td>
+            <td class="text-right">
+              <div class="flex items-center gap-2">
+                <input
+                  type="range"
+                  class="range range-secondary range-sm"
+                  min="0.25"
+                  max="4.0"
+                  step="0.25"
+                  :value="ttsSettings.speed"
+                  @input="
+                    updateTTSSettings({
+                      speed: parseFloat(($event.target as HTMLInputElement).value),
+                    })
+                  "
+                />
+                <span class="w-12 text-sm">{{ ttsSettings.speed }}x</span>
+              </div>
+            </td>
+          </tr>
+          <tr class="hover">
+            <td class="label-text">测试TTS</td>
+            <td class="text-right">
+              <button
+                class="btn btn-outline btn-secondary btn-sm"
+                @click="testTTS"
+              >
+                测试语音
+              </button>
             </td>
           </tr>
         </tbody>
@@ -177,10 +211,11 @@
 </template>
 
 <script setup lang="ts">
+import type { EdgeTTSVoice } from "~/composables/user/edgeTTSVoices";
+import EdgeTTSVoiceSelector from "~/components/EdgeTTSVoiceSelector.vue";
 import { useAutoNextQuestion } from "~/composables/user/autoNext";
 import { useErrorTip } from "~/composables/user/errorTip";
 import { GamePlayMode, useGamePlayMode } from "~/composables/user/gamePlayMode";
-import { PronunciationType, usePronunciation } from "~/composables/user/pronunciation";
 import { SHORTCUT_KEY_TYPES, useShortcutKeyMode } from "~/composables/user/shortcutKey";
 import {
   useAutoPlayEnglish,
@@ -188,6 +223,7 @@ import {
   useKeyboardSound,
 } from "~/composables/user/sound";
 import { useSpaceSubmitAnswer } from "~/composables/user/submitKey";
+import { TTSEngine, useTTS } from "~/composables/user/tts";
 import { useShowWordsWidth } from "~/composables/user/words";
 import { parseShortcutKeys } from "~/utils/keyboardShortcuts";
 
@@ -195,18 +231,23 @@ const { autoNextQuestion, toggleAutoQuestion } = useAutoNextQuestion();
 const { keyboardSound, toggleKeyboardSound } = useKeyboardSound();
 const { autoPlaySound, toggleAutoPlaySound } = useAutoPronunciation();
 const { autoPlayEnglish, toggleAutoPlayEnglish } = useAutoPlayEnglish();
-const {
-  pronunciation,
-  // 发音配置列表
-  getPronunciationOptions,
-  togglePronunciation,
-} = usePronunciation();
 const { showWordsWidth, toggleAutoWordsWidth } = useShowWordsWidth();
 const { useSpace, toggleUseSpaceSubmitAnswer } = useSpaceSubmitAnswer();
 const { showErrorTip, toggleShowErrorTip } = useErrorTip();
 const { shortcutKeys, handleEdit } = useShortcutKeyMode();
 
 const { getGamePlayModeOptions, currentGamePlayMode, toggleGamePlayMode } = useGamePlayMode();
+
+// TTS设置
+const { ttsSettings, getTTSEngineOptions, getTTSVoiceOptions, updateTTSSettings, testTTS } =
+  useTTS();
+
+// 语音变更处理
+function onVoiceChange(voice: EdgeTTSVoice | null) {
+  if (voice) {
+    updateTTSSettings({ voice: voice.shortName });
+  }
+}
 
 const shortcutKeyBindList = [
   {

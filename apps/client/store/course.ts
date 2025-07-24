@@ -124,16 +124,28 @@ export const useCourseStore = defineStore("course", () => {
   }
 
   async function setup(coursePackId: string, courseId: string) {
-    let course = await fetchCourse(coursePackId, courseId);
+    try {
+      console.log("Setting up course:", { coursePackId, courseId });
+      let course = await fetchCourse(coursePackId, courseId);
+      console.log("Course data fetched successfully:", course);
+      console.log("Statements before marking mastered:", course.statements);
 
-    course.statements = markMasteredElements(course.statements);
+      course.statements = markMasteredElements(course.statements);
+      console.log("Statements after marking mastered:", course.statements);
 
-    currentCourse.value = course;
-    if (isAuthenticated()) {
-      setupAutoSaveProgress(currentCourse);
-      if (statementIndex.value === 0) {
-        resetStatementIndex();
+      currentCourse.value = course;
+      console.log("Visible statements count:", visibleStatementsCount.value);
+
+      if (isAuthenticated()) {
+        setupAutoSaveProgress(currentCourse);
+        if (statementIndex.value === 0) {
+          resetStatementIndex();
+        }
       }
+      console.log("Course setup completed successfully");
+    } catch (error) {
+      console.error("Failed to setup course:", error);
+      throw error; // 重新抛出错误，让调用者知道失败了
     }
   }
 

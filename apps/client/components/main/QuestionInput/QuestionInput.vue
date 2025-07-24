@@ -11,7 +11,7 @@
           :class="getWordsClassNames(i)"
           :style="{ minWidth: `${inputWidth(w)}ch` }"
         >
-          {{ findWordById(i)!.userInput }}
+          {{ findWordById(i)?.userInput || "" }}
         </div>
         <div
           v-else
@@ -145,7 +145,13 @@ function handleSubmitAnswer() {
 }
 
 function getWordsClassNames(index: number) {
-  const word = findWordById(index)!;
+  const word = findWordById(index);
+
+  // 如果找不到对应的单词，返回默认样式
+  if (!word) {
+    return "text-[#20202099] border-b-gray-300 dark:text-gray-300 dark:border-b-gray-400";
+  }
+
   // 当前单词激活 且 聚焦
   if (word.isActive && focusing.value) {
     return "text-fuchsia-500 border-b-fuchsia-500";

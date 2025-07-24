@@ -1,50 +1,52 @@
-import { watchEffect } from "vue";
-
 import type { PlayOptions } from "./audio";
 import { useToolbar } from "~/composables/main/dictation";
 import { useGamePlayMode } from "~/composables/user/gamePlayMode";
-import { usePronunciation } from "~/composables/user/pronunciation";
+import { useTTS } from "~/composables/user/tts";
 import { useCourseStore } from "~/store/course";
-import { play, updateSource } from "./audio";
 
-const { getPronunciationUrl } = usePronunciation();
+const { playTTS, fallbackTTS } = useTTS();
 
-let lastPronunciationUrl = "";
 export function useCurrentStatementEnglishSound() {
   const courseStore = useCourseStore();
   const { toolBarData } = useToolbar();
   const { isDictationMode } = useGamePlayMode();
 
-  watchEffect(() => {
-    const word = courseStore.currentStatement?.english;
-    const pronunciationUrl = getPronunciationUrl(word);
-    if (lastPronunciationUrl !== pronunciationUrl) {
-      updateSource(pronunciationUrl);
-    }
-    lastPronunciationUrl = pronunciationUrl;
-  });
-
   return {
-    playSound: (options?: PlayOptions) => {
-      if (isDictationMode()) {
-        const { times, rate, interval } = toolBarData;
-        return play({ times, rate, interval });
-      } else {
-        return play(options);
+    playSound: async (options?: PlayOptions) => {
+      const english = courseStore.currentStatement?.english;
+      if (!english) return;
+
+      try {
+        // 优先使用TTS引擎播放整句
+        await playTTS(english);
+      } catch (error) {
+        console.warn("TTS failed for sentence, using browser speech synthesis:", error);
+        // 直接使用浏览器内置语音合成
+        fallbackTTS(english);
       }
     },
   };
 }
 
 // 朗读每日一句
-export function readOneSentencePerDayAloud(str: string) {
-  const pronunciationUrl = getPronunciationUrl(str);
-  updateSource(pronunciationUrl);
-  play();
+export async function readOneSentencePerDayAloud(str: string) {
+  try {
+    // 优先使用TTS引擎
+    await playTTS(str);
+  } catch (error) {
+    console.warn("TTS failed for daily sentence, using browser speech synthesis:", error);
+    // 直接使用浏览器内置语音合成
+    fallbackTTS(str);
+  }
 }
 
-export function playEnglish(english: string) {
-  const pronunciationUrl = getPronunciationUrl(english);
-  updateSource(pronunciationUrl);
-  play();
+export async function playEnglish(english: string) {
+  try {
+    // 优先使用TTS引擎
+    await playTTS(english);
+  } catch (error) {
+    console.warn("TTS failed for English text, using browser speech synthesis:", error);
+    // 直接使用浏览器内置语音合成
+    fallbackTTS(english);
+  }
 }
