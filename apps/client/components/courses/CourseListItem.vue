@@ -2,25 +2,61 @@
   <div
     :ref="isActiveCourse ? 'activeCourseRef' : undefined"
     :class="[
-      'relative h-[160px] w-full cursor-pointer rounded-xl border border-gray-400 p-4 pb-6 transition-all duration-300 dark:text-gray-100',
-      'hover:text-purple-500 hover:shadow-lg hover:shadow-gray-300 hover:dark:text-purple-400 dark:hover:shadow-gray-500',
+      'relative flex w-full cursor-pointer items-center border-b border-gray-200 p-4 transition-all duration-300 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800',
       {
-        'border-2 border-emerald-500 hover:text-emerald-500 hover:shadow-emerald-200 hover:dark:text-emerald-300 dark:hover:shadow-emerald-700':
+        'border-l-4 border-l-emerald-500 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/30':
           hasFinished,
-        'border-2 border-purple-500 hover:text-purple-500 hover:shadow-purple-200 hover:dark:text-purple-300 dark:hover:shadow-purple-700':
+        'border-l-4 border-l-purple-500 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/30':
           isActiveCourse,
       },
     ]"
     @click="handleCardClick"
   >
-    <!-- 详情、编辑、导出和删除按钮 -->
-    <div class="absolute right-2 top-2 z-10 flex gap-1">
+    <!-- 主要内容区域 -->
+    <div class="min-w-0 flex-1">
+      <div class="flex items-start justify-between">
+        <div class="min-w-0 flex-1">
+          <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">
+            {{ title }}
+          </h3>
+          <p
+            class="mt-1 line-clamp-2 text-sm text-gray-500 dark:text-gray-400"
+            :title="description"
+          >
+            {{ description }}
+          </p>
+        </div>
+
+        <!-- 完成状态标记 -->
+        <div
+          v-if="hasFinished"
+          class="ml-4 flex-shrink-0"
+        >
+          <span
+            :class="[
+              'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
+              {
+                'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300':
+                  hasFinished,
+                'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300':
+                  isActiveCourse,
+              },
+            ]"
+          >
+            <UTooltip :text="dataTip"> 完成 {{ count }} 次 </UTooltip>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="ml-4 flex flex-shrink-0 items-center gap-1">
       <UTooltip text="课程详情">
         <UButton
           icon="i-heroicons-eye"
           size="xs"
           color="gray"
-          variant="soft"
+          variant="ghost"
           @click.stop="handleViewDetails"
         />
       </UTooltip>
@@ -29,7 +65,7 @@
           icon="i-heroicons-pencil"
           size="xs"
           color="blue"
-          variant="soft"
+          variant="ghost"
           @click.stop="handleEdit"
         />
       </UTooltip>
@@ -38,7 +74,7 @@
           icon="i-heroicons-arrow-down-tray"
           size="xs"
           color="green"
-          variant="soft"
+          variant="ghost"
           @click.stop="handleExport"
         />
       </UTooltip>
@@ -47,36 +83,9 @@
           icon="i-heroicons-trash"
           size="xs"
           color="red"
-          variant="soft"
+          variant="ghost"
           @click.stop="handleDelete"
         />
-      </UTooltip>
-    </div>
-
-    <!-- 可点击的主要内容区域 -->
-    <div class="h-full pr-28">
-      <h3 class="text-base font-bold">
-        {{ title }}
-      </h3>
-      <p
-        class="mt-4 line-clamp-3 text-sm text-gray-500 dark:text-gray-400"
-        :title="description"
-      >
-        {{ description }}
-      </p>
-    </div>
-    <div
-      v-if="hasFinished"
-      :class="[
-        'absolute bottom-1.5 right-2 h-5 w-7 rounded-md text-center text-xs leading-5 text-white',
-        {
-          'bg-emerald-600': hasFinished,
-          'bg-purple-600': isActiveCourse,
-        },
-      ]"
-    >
-      <UTooltip :text="dataTip">
-        {{ count }}
       </UTooltip>
     </div>
   </div>
@@ -176,7 +185,7 @@ const editErrors = reactive({
 
 function handleCardClick() {
   // 触发父组件的点击事件
-  console.log("Course card clicked, courseId:", props.id);
+  console.log("Course list item clicked, courseId:", props.id);
   emit("click", props.id);
 }
 

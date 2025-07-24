@@ -9,15 +9,42 @@
         <h2 class="text-center text-3xl dark:border-gray-600">
           {{ coursePackStore.currentCoursePack?.title }}
         </h2>
-        <button
-          @click="showImportDialog = true"
-          class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          导入课程
-        </button>
+
+        <div class="flex items-center gap-3">
+          <!-- 布局切换按钮 -->
+          <div class="flex rounded-lg border border-gray-300 p-1 dark:border-gray-600">
+            <UTooltip text="网格布局">
+              <UButton
+                icon="i-heroicons-squares-2x2"
+                size="xs"
+                :color="layoutType === 'grid' ? 'primary' : 'gray'"
+                :variant="layoutType === 'grid' ? 'solid' : 'ghost'"
+                @click="setLayoutType('grid')"
+              />
+            </UTooltip>
+            <UTooltip text="列表布局">
+              <UButton
+                icon="i-heroicons-list-bullet"
+                size="xs"
+                :color="layoutType === 'list' ? 'primary' : 'gray'"
+                :variant="layoutType === 'list' ? 'solid' : 'ghost'"
+                @click="setLayoutType('list')"
+              />
+            </UTooltip>
+          </div>
+
+          <button
+            @click="showImportDialog = true"
+            class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            导入课程
+          </button>
+        </div>
       </div>
       <div class="h-full scrollbar-hide">
+        <!-- 网格布局 -->
         <div
+          v-if="layoutType === 'grid'"
           class="grid h-[79vh] grid-cols-1 justify-start gap-8 overflow-y-auto overflow-x-hidden pb-96 pl-0 pr-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
         >
           <template
@@ -35,6 +62,29 @@
             />
           </template>
         </div>
+
+        <!-- 列表布局 -->
+        <div
+          v-else
+          class="h-[79vh] overflow-y-auto overflow-x-hidden pb-96"
+        >
+          <div class="space-y-0">
+            <template
+              v-for="course in coursePackStore.currentCoursePack?.courses"
+              :key="course.id"
+            >
+              <CoursesCourseListItem
+                :title="course.title"
+                :description="course.description"
+                :id="course.id"
+                :count="course.completionCount"
+                :coursePackId="course.coursePackId"
+                @click="handleChangeCourse(course.id)"
+                @refresh="handleRefresh"
+              />
+            </template>
+          </div>
+        </div>
       </div>
 
       <!-- 导入对话框 -->
@@ -50,11 +100,12 @@
 
 <script setup lang="ts">
 import { navigateTo } from "nuxt/app";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import CourseImportDialog from "~/components/courses/CourseImportDialog.vue";
 import { useActiveCourseMap } from "~/composables/courses/activeCourse";
+import { useCourseLayout } from "~/composables/courses/courseLayout";
 import { useCoursePackStore } from "~/store/coursePack";
 
 const isLoading = ref(false);
@@ -64,8 +115,13 @@ const router = useRouter();
 const coursePackStore = useCoursePackStore();
 const coursePackId = route.params.id as string;
 const { updateActiveCourseMap } = useActiveCourseMap();
+const { layoutType, setLayoutType, initializeLayout } = useCourseLayout();
 
 setup();
+
+onMounted(() => {
+  initializeLayout();
+});
 
 async function setup() {
   isLoading.value = true;
