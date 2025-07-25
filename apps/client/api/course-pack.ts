@@ -33,6 +33,18 @@ export async function fetchCoursePack(coursePackId: string) {
   })) as CoursePack;
 }
 
+export async function createCoursePack(data: {
+  title: string;
+  description?: string;
+  isFree: boolean;
+}) {
+  const http = getHttp();
+  return await http("/course-pack", {
+    method: "post",
+    body: data,
+  });
+}
+
 export async function importCourseFromCsv(
   coursePackId: string,
   csvData: Array<{ chinese: string; english: string; soundmark: string }>,
@@ -45,5 +57,12 @@ export async function importCourseFromCsv(
     headers: {
       "Content-Type": "application/json",
     },
+  });
+}
+
+export async function deleteCoursePack(coursePackId: string) {
+  const http = getHttp();
+  return await http(`/course-pack/${coursePackId}`, {
+    method: "delete",
   });
 }

@@ -13,6 +13,7 @@ import { CourseHistoryService } from "../course-history/course-history.service";
 import { CourseService } from "../course/course.service";
 import { DB, DbType } from "../global/providers/db.provider";
 import { MembershipService } from "../membership/membership.service";
+import { CreateCoursePackDto } from "./dto/create-course-pack.dto";
 
 @Injectable()
 export class CoursePackService {
@@ -42,6 +43,33 @@ export class CoursePackService {
     }
 
     return result;
+  }
+
+  async create(userId: string, createCoursePackDto: CreateCoursePackDto) {
+    // 获取用户课程包的最大顺序号
+    const maxOrderResult = await this.db.query.coursePack.findFirst({
+      where: eq(coursePack.creatorId, userId),
+      orderBy: [desc(coursePack.order)],
+      columns: { order: true },
+    });
+
+    const nextOrder = maxOrderResult ? maxOrderResult.order + 1 : 1;
+
+    // 创建课程包
+    const [newCoursePack] = await this.db
+      .insert(coursePack)
+      .values({
+        title: createCoursePackDto.title,
+        description: createCoursePackDto.description || "",
+        order: nextOrder,
+        isFree: createCoursePackDto.isFree,
+        creatorId: userId,
+        shareLevel: "private", // 默认为私有
+        cover: "", // 默认封面为空
+      })
+      .returning();
+
+    return newCoursePack;
   }
 
   async findFounderOnly() {
@@ -390,6 +418,42 @@ export class CoursePackService {
     return {
       success: true,
       course: updatedCourse[0],
+    };
+  }
+
+  async deleteCoursePack(userId: string, coursePackId: string) {
+    // 首先检查课程包是否存在且属于用户
+    const coursePackExists = await this.db.query.coursePack.findFirst({
+      where: and(eq(coursePack.id, coursePackId), eq(coursePack.creatorId, userId)),
+    });
+
+    if (!coursePackExists) {
+      throw new NotFoundException("课程包不存在或您没有权限删除它");
+    }
+
+    // 删除课程包下的所有课程及其相关数据
+    const courses = await this.db.query.course.findMany({
+      where: eq(course.coursePackId, coursePackId),
+    });
+
+    for (const courseItem of courses) {
+      // 删除课程相关的所有数据
+      await this.db.delete(statement).where(eq(statement.courseId, courseItem.id));
+      await this.db.delete(courseHistory).where(eq(courseHistory.courseId, courseItem.id));
+      await this.db
+        .delete(userCourseProgress)
+        .where(eq(userCourseProgress.courseId, courseItem.id));
+    }
+
+    // 删除所有课程
+    await this.db.delete(course).where(eq(course.coursePackId, coursePackId));
+
+    // 最后删除课程包
+    await this.db.delete(coursePack).where(eq(coursePack.id, coursePackId));
+
+    return {
+      success: true,
+      message: "课程包删除成功",
     };
   }
 }

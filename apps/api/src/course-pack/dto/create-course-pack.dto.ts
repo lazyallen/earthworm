@@ -1,4 +1,4 @@
-import { IsBoolean, IsInt, IsNotEmpty, IsOptional, IsString, Length, Min } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, Length } from "class-validator";
 
 export class CreateCoursePackDto {
   @IsNotEmpty()
@@ -9,12 +9,6 @@ export class CreateCoursePackDto {
   @IsOptional()
   @IsString()
   description?: string;
-
-  @IsInt()
-  order: number;
-
-  @IsInt()
-  difficulty: number;
 
   @IsBoolean()
   isFree: boolean;

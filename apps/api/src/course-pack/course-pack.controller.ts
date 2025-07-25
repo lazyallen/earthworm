@@ -3,6 +3,7 @@ import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from "@nes
 import { AuthGuard, UncheckAuth } from "../guards/auth.guard";
 import { User, UserEntity } from "../user/user.decorators";
 import { CoursePackService } from "./course-pack.service";
+import { CreateCoursePackDto } from "./dto/create-course-pack.dto";
 
 @Controller("course-pack")
 export class CoursePackController {
@@ -22,6 +23,12 @@ export class CoursePackController {
   @Get()
   async findAll(@User() user: UserEntity) {
     return await this.coursePackService.findAll(user.userId);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post()
+  async create(@User() user: UserEntity, @Body() createCoursePackDto: CreateCoursePackDto) {
+    return await this.coursePackService.create(user.userId, createCoursePackDto);
   }
 
   @UncheckAuth()
@@ -111,5 +118,11 @@ export class CoursePackController {
     );
     console.log("Update data:", body);
     return this.coursePackService.updateCourse(user.userId, coursePackId, courseId, body);
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete(":coursePackId")
+  async deleteCoursePack(@User() user: UserEntity, @Param("coursePackId") coursePackId: string) {
+    return this.coursePackService.deleteCoursePack(user.userId, coursePackId);
   }
 }

@@ -1,6 +1,14 @@
 <template>
   <div class="flex w-full flex-col">
-    <h2 class="mb-4 text-center text-3xl dark:border-gray-600">课程包列表</h2>
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="text-3xl dark:border-gray-600">课程包列表</h2>
+      <button
+        @click="showCreateDialog = true"
+        class="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      >
+        新建课程包
+      </button>
+    </div>
     <template v-if="isLoading">
       <Loading></Loading>
     </template>
@@ -24,6 +32,13 @@
         </div>
       </div>
     </template>
+
+    <!-- 新建课程包对话框 -->
+    <CreateCoursePackDialog
+      :is-open="showCreateDialog"
+      @close="showCreateDialog = false"
+      @submit="handleCreateCoursePack"
+    />
   </div>
 </template>
 
@@ -32,12 +47,14 @@ import { ref } from "vue";
 
 import type { CoursePack } from "~/types";
 import CoursePackCard from "~/components/courses/CoursePackCard.vue";
+import CreateCoursePackDialog from "~/components/CreateCoursePackDialog.vue";
 import { useNavigation } from "~/composables/useNavigation";
 import { useCoursePackStore } from "~/store/coursePack";
 
 const coursePackStore = useCoursePackStore();
 const { gotoCourseList } = useNavigation();
 const isLoading = ref(false);
+const showCreateDialog = ref(false);
 
 setup();
 
@@ -51,12 +68,27 @@ async function setup() {
 }
 
 function handleGoToCoursePack(coursePack: CoursePack) {
-  if (coursePack.isFree) {
-    gotoCourseList(coursePack.id);
-  } else {
-    // 看看是不是会员 不是的话 直接弹出消息告知 需要是会员
-    // TODO 还没有检测是不是会员的功能函数
-    console.log("需要是会员");
+  gotoCourseList(coursePack.id);
+}
+
+async function handleCreateCoursePack(data: {
+  title: string;
+  description?: string;
+  isFree: boolean;
+}) {
+  try {
+    isLoading.value = true;
+    const newCoursePack = await coursePackStore.createNewCoursePack(data);
+    // 创建成功后导航到新创建的课程包详情页
+    console.log("课程包创建成功！", newCoursePack);
+    if (newCoursePack && newCoursePack.id) {
+      gotoCourseList(newCoursePack.id);
+    }
+  } catch (error) {
+    console.error("创建课程包失败：", error);
+    // 这里可以显示错误消息
+  } finally {
+    isLoading.value = false;
   }
 }
 </script>
